@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UzChat Pro — Real-Time Xavfsiz Web Messenger</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="UzChat Pro">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-topbar">
+    <select id="authLangSelect" class="pill-btn" onchange="setLanguage(this.value)">
+      <option value="uz">🇺🇿 UZ</option>
+      <option value="ru">🇷🇺 RU</option>
+      <option value="en">🇬🇧 EN</option>
+    </select>
+    <button class="pill-btn" id="btnInstallApp" style="display:none; background:var(--accent); color:#fff; border-color:transparent;" onclick="installPWA()">📲 Ilovani o'rnatish</button>
+    <button class="pill-btn" id="authThemeBtn" onclick="toggleTheme()">☀️ Oq rejim</button>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">💬</div>
+      <h1>UzChat <span>Pro</span></h1>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabRegister" data-i18n="register" onclick="switchAuthTab('register')">Ro'yxatdan o'tish</button>
+      <button class="auth-tab" id="tabLogin" data-i18n="login" onclick="switchAuthTab('login')">Kirish</button>
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+
+    <form id="registerForm" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label data-i18n="fullName">Ismingiz</label>
+        <input type="text" id="regName" placeholder="Azizbek Karimov" required maxlength="40">
+      </div>
+      <div class="form-group">
+        <label>Username (@)</label>
+        <div class="username-wrap">
+          <span class="username-prefix">@</span>
+          <input type="text" id="regUsername" placeholder="azizbek_dev" required maxlength="24" oninput="checkUsernameLive(this.value, 'regUserHint')">
+        </div>
+        <div id="regUserHint" class="field-hint"></div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="password">Parol</label>
+        <input type="password" id="regPassword" placeholder="••••••" required minlength="4">
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%; padding:11px;" data-i18n="createAccount">Hisob yaratish</button>
+    </form>
+
+    <form id="loginForm" style="display:none;" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Username</label>
+        <div class="username-wrap">
+          <span class="username-prefix">@</span>
+          <input type="text" id="loginUsername" placeholder="sherbek" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="password">Parol</label>
+        <input type="password" id="loginPassword" placeholder="••••••" required>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%; padding:11px;" data-i18n="signIn">Tizimga kirish</button>
+    </form>
+
+    <div class="demo-box">
+      <span data-i18n="demoHint">Tayyor demo hisoblar:</span>
+      <div class="demo-chips">
+        <button type="button" class="demo-chip" onclick="quickFill('sherbek')">👑 @sherbek (Admin / 1234)</button>
+        <button type="button" class="demo-chip" onclick="quickFill('madina_uz')">@madina_uz (1234)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp">
+  <div class="app-grid" id="appGrid">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <button class="my-profile-btn" onclick="openProfileModal()" title="Profil">
+          <div class="avatar" id="myAvatar">A</div>
+          <div style="min-width:0;">
+            <div class="my-profile-name" id="myDisplayName">User</div>
+            <div class="my-profile-user" id="myDisplayUser">@user</div>
+          </div>
+        </button>
+        <div class="header-actions">
+          <button class="icon-btn" id="btnInstallAppMain" style="display:none;" onclick="installPWA()" title="Ilovani o'rnatish">📲</button>
+          <button class="icon-btn" id="btnAdminPanel" style="display:none;" onclick="openAdminModal()" title="Admin Panel">👑</button>
+          <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Oq / Qora rejim">☀️</button>
+          <button class="icon-btn" onclick="openDeletedArchiveModal()" title="O'chirilgan xabarlar arxivi">♻️</button>
+          <button class="icon-btn" onclick="openSecurityModal()" title="Xavfsizlik">🛡️</button>
+          <button class="icon-btn" onclick="lockEntireApp()" title="Ilovani qulflash">🔒</button>
+          <button class="icon-btn" onclick="handleLogout()" title="Chiqish">🚪</button>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearch" data-i18n-placeholder="searchUsers" placeholder="@username qidirish..." oninput="handleGlobalSearch()">
+        </div>
+        <button class="icon-btn" style="background:var(--bg-panel); border:1px solid var(--border);" onclick="openGroupModal()" title="Yangi guruh yaratish">👥+</button>
+      </div>
+
+      <div class="sidebar-tabs">
+        <button class="stab active" id="btnTabAll" onclick="switchSidebarMode('normal')" data-i18n="chats">💬 Chatlar</button>
+        <button class="stab" id="btnTabHidden" onclick="switchSidebarMode('hidden')" data-i18n="hiddenChats">🔒 Yashirin</button>
+        <select id="appLangSelect" class="stab" style="max-width:74px; padding:5px;" onchange="setLanguage(this.value)">
+          <option value="uz">UZ</option>
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+        </select>
+      </div>
+
+      <div class="chat-list" id="chatList"></div>
+    </aside>
+
+    <main class="chat-area">
+      <div class="chat-empty" id="chatEmpty">
+        <div class="chat-empty-icon">🛡️</div>
+        <h2 data-i18n="welcomeTitle">UzChat Pro — Real-Time Messenger</h2>
+        <p data-i18n="welcomeSub">Chap tarafdan @username qidiring, guruh oching yoki kompyuter va telefon o'rtasida jonli yozishing.</p>
+      </div>
+
+      <div class="chat-active-view" id="chatActiveView">
+        <header class="chat-header">
+          <div class="chat-header-left">
+            <button class="icon-btn mobile-back-btn" onclick="closeMobileChat()">←</button>
+            <div class="avatar" id="peerAvatar">U</div>
+            <div style="min-width:0;">
+              <div class="chat-header-name">
+                <span id="peerName">User</span>
+                <span class="e2e-pill">🔒 E2E</span>
+              </div>
+              <div class="chat-header-sub" id="peerSub">@username</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn" onclick="openWallpaperModal()" title="Chat orqa fonini o'zgartirish">🖼️</button>
+            <button class="icon-btn" onclick="toggleChatSearch()" title="Chat ichida qidirish">🔍</button>
+            <button class="icon-btn" id="btnToggleHideChat" onclick="toggleHideCurrentChat()" title="Yashirish / Chiqarish">👁️‍🗨️</button>
+          </div>
+        </header>
+
+        <!-- Search inside chat -->
+        <div class="chat-subbar" id="chatSearchBar">
+          <input type="text" id="inChatSearchInput" placeholder="Chat ichida qidirish..." style="flex:1; padding:6px 10px;" oninput="renderMessages()">
+          <button class="icon-btn" onclick="toggleChatSearch()">✕</button>
+        </div>
+
+        <!-- Pinned message bar -->
+        <div class="chat-subbar pinned-bar" id="pinnedBar" onclick="scrollToPinned()">
+          <div style="min-width:0;">
+            <div style="font-size:11px; color:var(--accent); font-weight:700;">📌 Qadalgan xabar</div>
+            <div id="pinnedText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:500px;"></div>
+          </div>
+          <button class="icon-btn" onclick="event.stopPropagation(); unpinCurrent()" title="Olib tashlash">✕</button>
+        </div>
+
+        <div class="messages-wrap" id="messagesWrap"></div>
+
+        <div class="composer-area">
+          <div class="emoji-picker" id="emojiPicker"></div>
+          <div class="composer-banner" id="composerBanner">
+            <div>
+              <div id="bannerTitle" style="font-size:12px; font-weight:700; color:var(--accent);"></div>
+              <div id="bannerText" style="font-size:12.5px; color:var(--text-muted);"></div>
+            </div>
+            <button class="icon-btn" onclick="cancelComposerMode()">✕</button>
+          </div>
+
+          <div class="composer-row">
+            <button class="icon-btn" onclick="toggleEmojiPicker()" title="Emoji">😊</button>
+            <button class="icon-btn" onclick="document.getElementById('fileUploadInput').click()" title="Rasm yoki fayl yuborish">📎</button>
+            <input type="file" id="fileUploadInput" accept="image/*,video/*,audio/*,*/*" style="display:none;" onchange="handleFileSelected(event)">
+            <button class="icon-btn" id="voiceRecBtn" onclick="toggleVoiceRecording()" title="Ovozli xabar yozish">🎤</button>
+            <button class="icon-btn" id="viewOnceBtn" onclick="toggleViewOnceMode()" title="Bir martalik rasm / video / ovozli xabar">1️⃣</button>
+            <select id="destructTimer" class="timer-select" title="O'z-o'zidan o'chish taymeri">
+              <option value="0">⏱️ Yo'q</option>
+              <option value="10">⏱️ 10s</option>
+              <option value="30">⏱️ 30s</option>
+              <option value="60">⏱️ 60s</option>
+            </select>
+            <input type="text" id="messageInput" data-i18n-placeholder="typeMessage" placeholder="Xabar yozing..." autocomplete="off"
+                   oninput="notifyTyping()" onkeydown="if(event.key==='Enter') sendTextMessage()">
+            <button class="send-btn" onclick="sendTextMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- Profile Modal -->
+<div class="modal-backdrop" id="profileModal">
+  <div class="modal">
+    <div class="modal-header"><h3 data-i18n="myProfile">👤 Mening profilim</h3><button class="icon-btn" onclick="closeModal('profileModal')">✕</button></div>
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+      <div class="avatar" id="profilePreviewAvatar" style="width:62px; height:62px; font-size:22px;">U</div>
+      <div>
+        <button type="button" class="btn-secondary" onclick="document.getElementById('avatarUploadInput').click()">📷 Rasm yuklash</button>
+        <input type="file" id="avatarUploadInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+      </div>
+    </div>
+    <form onsubmit="saveProfile(event)">
+      <div class="form-group"><label data-i18n="fullName">Ism</label><input type="text" id="editName" required maxlength="40"></div>
+      <div class="form-group">
+        <label>Username (@)</label>
+        <div class="username-wrap"><span class="username-prefix">@</span><input type="text" id="editUsername" required maxlength="24" oninput="checkUsernameLive(this.value, 'editUserHint', true)"></div>
+        <div id="editUserHint" class="field-hint"></div>
+      </div>
+      <div class="form-group"><label>Bio</label><input type="text" id="editBio" maxlength="100"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('profileModal')">Yopish</button>
+        <button type="submit" class="btn-primary">Saqlash</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Create Group Modal -->
+<div class="modal-backdrop" id="groupModal">
+  <div class="modal">
+    <div class="modal-header"><h3>👥 Yangi guruh yaratish</h3><button class="icon-btn" onclick="closeModal('groupModal')">✕</button></div>
+    <form onsubmit="submitCreateGroup(event)">
+      <div class="form-group">
+        <label>Guruh nomi</label>
+        <input type="text" id="groupTitleInput" placeholder="Masalan: Web Tizimlari 301-guruh" required maxlength="50">
+      </div>
+      <div class="form-group">
+        <label>A'zolarni tanlang:</label>
+        <div class="member-list" id="groupMembersList"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('groupModal')">Bekor qilish</button>
+        <button type="submit" class="btn-primary">Guruh yaratish</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Vault Password Modal -->
+<div class="modal-backdrop" id="vaultPassModal">
+  <div class="modal" id="vaultPassBox">
+    <div class="modal-header"><h3 id="vaultModalTitle">🔒 Yashirin chat paroli</h3><button class="icon-btn" onclick="closeModal('vaultPassModal')">✕</button></div>
+    <p id="vaultModalDesc" style="font-size:13px; color:var(--text-muted); margin-bottom:14px;"></p>
+    <form onsubmit="submitVaultPassword(event)">
+      <div class="form-group"><label id="vaultPassLabel1">Parol</label><input type="password" id="vaultPassInput1" required minlength="3"></div>
+      <div class="form-group" id="vaultConfirmGroup" style="display:none;"><label>Parolni tasdiqlang</label><input type="password" id="vaultPassInput2"></div>
+      <div id="vaultPassErr" class="auth-error"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeModal('vaultPassModal')">Bekor qilish</button>
+        <button type="submit" class="btn-primary" id="vaultSubmitBtn">Tasdiqlash</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Security Modal -->
+<div class="modal-backdrop" id="securityModal">
+  <div class="modal">
+    <div class="modal-header"><h3>🛡️ Xavfsizlik va Maxfiylik</h3><button class="icon-btn" onclick="closeModal('securityModal')">✕</button></div>
+    <div class="setting-row">
+      <div><div style="font-weight:600;">Maxfiylik rejimi (Blur)</div><div style="font-size:12px; color:var(--text-muted);">Oxirgi xabarlarni xiralashtirish</div></div>
+      <button class="btn-secondary" id="btnPrivacyToggle" onclick="togglePrivacyBlur()">Yoqish</button>
+    </div>
+    <div class="setting-row">
+      <div><div style="font-weight:600;">Ovozli bildirishnoma</div><div style="font-size:12px; color:var(--text-muted);">Yangi xabar kelganda tovush</div></div>
+      <button class="btn-secondary" id="btnSoundToggle" onclick="toggleSound()">Yoqilgan 🔊</button>
+    </div>
+    <div class="setting-row">
+      <div><div style="font-weight:600;">O'chirilgan xabarlarni saqlash</div><div style="font-size:12px; color:var(--text-muted);">O'chirilgan xabarlarni ♻️ arxivda saqlab qolish</div></div>
+      <button class="btn-secondary" id="btnSaveDeletedToggle" onclick="toggleSaveDeleted()">Yoqilgan ✓</button>
+    </div>
+    <div class="setting-row">
+      <div><div style="font-weight:600;">Yashirin chat paroli</div><div style="font-size:12px; color:var(--text-muted);" id="vaultPassStatusText"></div></div>
+      <button class="btn-secondary" onclick="openChangeVaultPassword()">Almashtirish</button>
+    </div>
+    <div style="margin-top:14px;">
+      <div style="font-weight:600; font-size:13.5px;">📋 Xavfsizlik jurnali</div>
+      <div class="log-list" id="securityLogList"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-primary" onclick="closeModal('securityModal')">Yopish</button></div>
+  </div>
+</div>
+
+<!-- Admin Panel Modal -->
+<div class="modal-backdrop" id="adminModal">
+  <div class="modal wide">
+    <div class="modal-header"><h3>👑 Admin Boshqaruv Paneli</h3><button class="icon-btn" onclick="closeModal('adminModal')">✕</button></div>
+    <div class="stats-grid" id="adminStatsGrid"></div>
+    <div style="overflow-x:auto;">
+      <table class="admin-table">
+        <thead><tr><th>Foydalanuvchi</th><th>@Username</th><th>Holati</th><th>Rol</th><th>Amallar</th></tr></thead>
+        <tbody id="adminUsersBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer"><button class="btn-primary" onclick="closeModal('adminModal')">Yopish</button></div>
+  </div>
+</div>
+
+<!-- Forward Modal -->
+<div class="modal-backdrop" id="forwardModal">
+  <div class="modal">
+    <div class="modal-header"><h3>↪️ Xabarni uzatish</h3><button class="icon-btn" onclick="closeModal('forwardModal')">✕</button></div>
+    <div class="member-list" id="forwardList"></div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-header"><h3>🗑️ Xabarni o'chirish</h3><button class="icon-btn" onclick="closeModal('deleteModal')">✕</button></div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button class="btn-danger" id="btnDelEveryone" onclick="confirmDeleteMessage('everyone')">Hamma uchun o'chirish</button>
+      <button class="btn-secondary" onclick="confirmDeleteMessage('me')">Faqat o'zim uchun o'chirish</button>
+      <button class="btn-secondary" onclick="closeModal('deleteModal')">Bekor qilish</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Wallpaper Modal -->
+<div class="modal-backdrop" id="wallpaperModal">
+  <div class="modal">
+    <div class="modal-header"><h3>🖼️ Chat orqa fonini tanlang</h3><button class="icon-btn" onclick="closeModal('wallpaperModal')">✕</button></div>
+    <div class="wp-grid" id="wallpaperGrid">
+      <div class="wp-option" data-wp="wp-default" style="background:#162033;" onclick="selectWallpaper('wp-default')">Standart</div>
+      <div class="wp-option" data-wp="wp-telegram" style="background:linear-gradient(135deg,#0d2137,#14334a,#10b981);" onclick="selectWallpaper('wp-telegram')">Telegram</div>
+      <div class="wp-option" data-wp="wp-aurora" style="background:linear-gradient(135deg,#3b82f6,#7c3aed,#06b6d4);" onclick="selectWallpaper('wp-aurora')">Aurora</div>
+      <div class="wp-option" data-wp="wp-sunset" style="background:linear-gradient(135deg,#f97316,#ec4899,#3b132a);" onclick="selectWallpaper('wp-sunset')">Quyosh botishi</div>
+      <div class="wp-option" data-wp="wp-forest" style="background:linear-gradient(135deg,#064e3b,#10b981,#0f2419);" onclick="selectWallpaper('wp-forest')">O'rmon</div>
+      <div class="wp-option" data-wp="wp-ocean" style="background:linear-gradient(135deg,#0284c7,#0b2c4d,#06b6d4);" onclick="selectWallpaper('wp-ocean')">Okean</div>
+      <div class="wp-option" data-wp="wp-midnight" style="background:linear-gradient(180deg,#090d16,#1f2937);" onclick="selectWallpaper('wp-midnight')">Tungi osmon</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; justify-content:space-between; border-top:1px solid var(--border); padding-top:12px;">
+      <button type="button" class="btn-secondary" onclick="document.getElementById('customWpInput').click()">📷 O'z rasmingizni qo'yish</button>
+      <input type="file" id="customWpInput" accept="image/*" style="display:none;" onchange="handleCustomWallpaper(event)">
+      <button type="button" class="btn-primary" onclick="closeModal('wallpaperModal')">Tayyor</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deleted Messages Archive Modal -->
+<div class="modal-backdrop" id="deletedArchiveModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h3>♻️ O'chirilgan xabarlar arxivi</h3>
+      <button class="icon-btn" onclick="closeModal('deletedArchiveModal')">✕</button>
+    </div>
+    <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:12px;">Chatlarda o'chirilgan xabarlar avtomatik ravishda shu yerda saqlanadi (Xavfsizlik bo'limidan o'chirib-yoqish mumkin).</p>
+    <div class="archive-list" id="deletedArchiveList"></div>
+    <div class="modal-footer">
+      <button class="btn-danger" onclick="clearAllDeletedArchive()">Arxivni tozalash</button>
+      <button class="btn-primary" onclick="closeModal('deletedArchiveModal')">Yopish</button>
+    </div>
+  </div>
+</div>
+
+<!-- View-Once Media Modal -->
+<div class="modal-backdrop" id="viewOnceModal">
+  <div class="modal" style="max-width:520px; text-align:center;">
+    <div class="modal-header">
+      <h3 id="voModalTitle">🔥 Bir martalik media</h3>
+      <button class="icon-btn" onclick="closeViewOnceModal()">✕</button>
+    </div>
+    <div id="voMediaContainer" style="margin:10px 0;"></div>
+    <p style="font-size:12px; color:var(--warning); margin-top:8px;">⚠️ Ushbu media yopilishi bilan o'chib ketadi va qayta ochib bo'lmaydi!</p>
+    <div class="modal-footer" style="justify-content:center;">
+      <button class="btn-primary" onclick="closeViewOnceModal()">Yopish va o'chirish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Lightbox & App Lock -->
+<div id="lightboxOverlay" onclick="this.style.display='none'"><img id="lightboxImg" src=""></div>
+
+<div id="appLockOverlay">
+  <div class="auth-card" id="appLockBox" style="max-width:360px; text-align:center;">
+    <div style="font-size:40px; margin-bottom:8px;">🔒</div>
+    <h2 style="margin-bottom:6px;">Ilova qulflangan</h2>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Hisob yoki yashirin chat parolingizni kiriting</p>
+    <form onsubmit="unlockEntireApp(event)">
+      <input type="password" id="appLockInput" placeholder="Parol..." style="width:100%; margin-bottom:10px; text-align:center;" required>
+      <div id="appLockErr" class="auth-error"></div>
+      <button type="submit" class="btn-primary" style="width:100%;">Ochish</button>
+    </form>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
