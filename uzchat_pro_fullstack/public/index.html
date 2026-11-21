@@ -175,17 +175,25 @@
           </div>
 
           <div class="composer-row">
-            <button class="icon-btn" onclick="toggleEmojiPicker()" title="Emoji">😊</button>
-            <button class="icon-btn" onclick="document.getElementById('fileUploadInput').click()" title="Rasm yoki fayl yuborish">📎</button>
+            <div class="composer-menu-wrap">
+              <button type="button" class="icon-btn composer-menu-btn" onclick="document.getElementById('composerMenu').classList.toggle('open')" title="Qo'shimcha">☰</button>
+              <div class="composer-dropdown" id="composerMenu">
+                <button type="button" class="dropdown-item" onclick="toggleEmojiPicker(); document.getElementById('composerMenu').classList.remove('open')">😊 <span>Emoji</span></button>
+                <button type="button" class="dropdown-item" onclick="document.getElementById('fileUploadInput').click(); document.getElementById('composerMenu').classList.remove('open')">📎 <span>Rasm / Fayl</span></button>
+                <button type="button" class="dropdown-item" id="voiceRecBtn" onclick="toggleVoiceRecording(); document.getElementById('composerMenu').classList.remove('open')">🎤 <span>Ovozli xabar</span></button>
+                <button type="button" class="dropdown-item" id="viewOnceBtn" onclick="toggleViewOnceMode(); document.getElementById('composerMenu').classList.remove('open')">1️⃣ <span>Bir martalik</span></button>
+                <div class="dropdown-item timer-row">
+                  <span>⏱️ Taymer:</span>
+                  <select id="destructTimer" class="timer-select" title="O'z-o'zidan o'chish taymeri">
+                    <option value="0">Yo'q</option>
+                    <option value="10">10s</option>
+                    <option value="30">30s</option>
+                    <option value="60">60s</option>
+                  </select>
+                </div>
+              </div>
+            </div>
             <input type="file" id="fileUploadInput" accept="image/*,video/*,audio/*,*/*" style="display:none;" onchange="handleFileSelected(event)">
-            <button class="icon-btn" id="voiceRecBtn" onclick="toggleVoiceRecording()" title="Ovozli xabar yozish">🎤</button>
-            <button class="icon-btn" id="viewOnceBtn" onclick="toggleViewOnceMode()" title="Bir martalik rasm / video / ovozli xabar">1️⃣</button>
-            <select id="destructTimer" class="timer-select" title="O'z-o'zidan o'chish taymeri">
-              <option value="0">⏱️ Yo'q</option>
-              <option value="10">⏱️ 10s</option>
-              <option value="30">⏱️ 30s</option>
-              <option value="60">⏱️ 60s</option>
-            </select>
             <input type="text" id="messageInput" data-i18n-placeholder="typeMessage" placeholder="Xabar yozing..." autocomplete="off"
                    oninput="notifyTyping()" onkeydown="if(event.key==='Enter') sendTextMessage()">
             <button class="send-btn" onclick="sendTextMessage()">➤</button>
