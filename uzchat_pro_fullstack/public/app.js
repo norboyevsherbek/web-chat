@@ -1225,3 +1225,38 @@ async function clearAllDeletedArchive() {
 // Apply saved wallpaper on load
 window.addEventListener('DOMContentLoaded', applyWallpaper);
 applyWallpaper();
+
+// ==================== TELEFON "ORQAGA" (BACK) TUGMASINI BOSHQARISH ====================
+(function () {
+  const grid = document.getElementById('appGrid');
+  if (!grid) return;
+
+  // Chat ochilganda brauzer tarixiga bitta qadam qo'shish
+  const observer = new MutationObserver(() => {
+    const isChatOpen = grid.classList.contains('mobile-chat-open');
+    if (isChatOpen && (!history.state || history.state.view !== 'chat')) {
+      history.pushState({ view: 'chat' }, '');
+    } else if (!isChatOpen && history.state && history.state.view === 'chat') {
+      history.back();
+    }
+  });
+  observer.observe(grid, { attributes: true, attributeFilter: ['class'] });
+
+  // Telefonning "Orqaga" tugmasi bosilganda
+  window.addEventListener('popstate', () => {
+    // 1. Agar biror oyna (modal) ochiq bo'lsa, avval o'shani yopadi
+    const openModal = document.querySelector('.modal-backdrop.open');
+    if (openModal) {
+      openModal.classList.remove('open');
+      return;
+    }
+    // 2. Agar chat ichida bo'lsa, ilovadan chiqmasdan chatlar ro'yxatiga qaytaradi
+    if (grid.classList.contains('mobile-chat-open')) {
+      if (typeof closeMobileChat === 'function') {
+        closeMobileChat();
+      } else {
+        grid.classList.remove('mobile-chat-open');
+      }
+    }
+  });
+})();
