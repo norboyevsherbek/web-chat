@@ -710,19 +710,8 @@ async function start() {
   try { db.run('ALTER TABLE messages ADD COLUMN view_once INTEGER DEFAULT 0'); } catch(e) {}
   try { db.run('ALTER TABLE messages ADD COLUMN viewed_once INTEGER DEFAULT 0'); } catch(e) {}
 
-  const count = queryOne('SELECT COUNT(*) as c FROM users').c;
-  if (count === 0) {
-    const now = Date.now();
-    db.run(
-      'INSERT INTO users (id, name, username, password, bio, color, role, is_banned, save_deleted, last_seen, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)',
-      ['u_admin_1', 'Sherbek Norboyev', 'sherbek', hashPass('1234'), 'Tizim administratori', '#3b82f6', 'admin', now, now]
-    );
-    db.run(
-      'INSERT INTO users (id, name, username, password, bio, color, role, is_banned, save_deleted, last_seen, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)',
-      ['u_demo_2', 'Madina Karimova', 'madina_uz', hashPass('1234'), 'UI/UX dizayner', '#8b5cf6', 'user', now, now]
-    );
-    saveDatabase();
-  }
+  // Baza toza boshlanadi — birinchi ro'yxatdan o'tgan foydalanuvchi avtomatik Admin bo'ladi
+  saveDatabase();
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log('\n=================================================');
