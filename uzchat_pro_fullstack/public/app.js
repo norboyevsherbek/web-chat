@@ -1260,3 +1260,48 @@ applyWallpaper();
     }
   });
 })();
+
+// ==================== YASHIRIN CHATLARNI TO'LIQ HIMOYALASH ====================
+(function () {
+  // 1. Yashirin chatga qo'shilgan foydalanuvchilarni "Barcha foydalanuvchilar" ro'yxatidan yashirish
+  const _origRenderSidebar = renderSidebar;
+  renderSidebar = function () {
+    _origRenderSidebar();
+    const query = document.getElementById('globalSearch').value.trim();
+    if (sidebarMode === 'normal' && !query) {
+      const hiddenUserIds = new Set();
+      chatsCache.forEach(c => {
+        if (c.type === 'direct' && c.isHidden) {
+          const peer = c.members.find(m => m.id !== currentUser.id);
+          if (peer) hiddenUserIds.add(peer.id);
+        }
+      });
+
+      const listEl = document.getElementById('chatList');
+      hiddenUserIds.forEach(uid => {
+        const el = listEl.querySelector(`.chat-item[onclick="openDirectChat('${uid}')"]`);
+        if (el) el.remove();
+      });
+
+      // Agar "Barcha foydalanuvchilar" bo'limida boshqa odam qolmasa, sarlavhasini ham yashirish
+      const labels = listEl.querySelectorAll('.section-label');
+      labels.forEach(lbl => {
+        if (lbl.textContent.trim().toLowerCase() === 'barcha foydalanuvchilar' && !lbl.nextElementSibling) {
+          lbl.remove();
+        }
+      });
+    }
+  };
+
+  // 2. Qidiruvdan topib ustiga bosilganda ham, yashirin chat bo'lsa parol so'rash
+  const _origOpenChat = openChat;
+  openChat = async function (chatId) {
+    const chat = chatsCache.find(c => c.id === chatId);
+    if (chat && chat.isHidden && !isHiddenUnlocked) {
+      openVaultPasswordFlow('openHidden');
+      showToast('🔒 Bu chat yashirilgan! Ochish uchun parolni kiriting.');
+      return;
+    }
+    return _origOpenChat(chatId);
+  };
+})();
