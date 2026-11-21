@@ -543,3 +543,85 @@ html, body, #mainApp {
     display: none;
   }
 }
+
+/* ==================== YASHIRIN MENYU (☰) ==================== */
+.composer-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.composer-menu-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-main);
+}
+.composer-dropdown {
+  position: absolute;
+  bottom: 52px;
+  left: 0;
+  width: 210px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow);
+  z-index: 60;
+  animation: popIn 0.16s ease;
+}
+.composer-dropdown.open {
+  display: flex;
+}
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-main);
+  text-align: left;
+}
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
+.dropdown-item.recording {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.dropdown-item.view-once-active {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+}
+.timer-row {
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+  padding-top: 8px;
+}
+.timer-row .timer-select {
+  padding: 4px 8px;
+  font-size: 12.5px;
+  max-width: 85px;
+}
+
+/* Hamma qurilmada xabar yozish qatori bir qatorda tekis turishi uchun */
+.composer-row {
+  flex-wrap: nowrap !important;
+  gap: 8px;
+}
+#messageInput {
+  order: unset !important;
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+.send-btn {
+  order: unset !important;
+}
